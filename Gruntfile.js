@@ -72,6 +72,7 @@ module.exports = function(grunt) {
           'webinos/core/wrt/lib/webinos.mediacontent.js',
           'webinos/core/wrt/lib/webinos.corePZinformation.js',
           'webinos/core/wrt/lib/webinos.nfc.js',
+          'webinos/core/wrt/lib/webinos.policymanagement.js',
           'webinos/core/wrt/lib/webinos.servicedisco.js'
         ],
         dest: '<%= generated.normal %>'

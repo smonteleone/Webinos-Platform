@@ -95,6 +95,10 @@
     "nfc"     :{
       "name"    :"nfc",
       "location":"api/nfc/"
+    },
+    "policymanagement": {
+      "name"    :"PolicyManagement",
+      "location":"api/policymanagement/"
     }
   },
   "manager":{

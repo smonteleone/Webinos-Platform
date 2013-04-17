@@ -36,5 +36,6 @@
     <module>vehicle</module>
     <module>corePZinformation</module>
     <module>nfc</module>
+    <module>policymanagement</module>
   </modules>
 </project>

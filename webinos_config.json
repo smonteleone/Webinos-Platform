@@ -121,6 +121,10 @@
     {
       "name": "nfc",
       "params": {}
+    },
+    {
+      "name"  :"policymanagement",
+      "params":{}
     }
   ],
   "certConfiguration": {
