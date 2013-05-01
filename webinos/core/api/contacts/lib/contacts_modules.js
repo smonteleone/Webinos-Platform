@@ -116,7 +116,12 @@ function makeW3Ccontacts(successCB, errorCB)
     var rawContacts;
     var wID = webinos.global.require (webinos.global.pzp.location).getDeviceName();
     var pzpJsonPath = wPath + "/userData/" + wID + ".json";
-    var pzp_json = require(pzpJsonPath);
+    var pzp_json =  {};
+	try{
+		pzp_json = require(pzpJsonPath);
+	}catch(e){
+	}
+	
     if ( !pzp_json.abook || pzp_json.abook === "")
     {
         // Is this the first time we search for an abook setting?
@@ -169,6 +174,10 @@ function makeW3Ccontacts(successCB, errorCB)
 
         contacts_l = JSON.parse(JSON.stringify(contacts_l));
         successCB(contacts_l);
+    }else if (fs.existsSync(contactsPath)){ // Return google cached contacts
+        var contacts_g = fs.readFileSync(contactsPath, 'utf8');
+		contacts_g = JSON.parse(contacts_g);
+		successCB(contacts_g);
     }
     else if (errorCB)
         errorCB(this.NOT_FOUND_ERROR);
@@ -372,21 +381,8 @@ this.findContacts = function(filters, successCB, errorCB)
     else //on Android
     {
         console.log("---FIND: android, local");
-        //if(!options)
         var options=new Array();
-        
-        LocalContacts.find(options, function(c_list)
-        {
-            var res = c_list;
-            
-            
-            res = filterContacts(filters[0], res);
-            cb(res)
-            if (res.empty && eb)
-            {
-                throw new ContactError(this.UNKNOWN_ERROR);
-            }
-        }, function(){}, options);
+        LocalContacts.find({}, successCB, function(){}, options);
     }
 };
 

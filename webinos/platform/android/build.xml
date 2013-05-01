@@ -1,9 +1,95 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="webinos" default="debug" basedir="../../..">
 
-	<!-- ANDROID_HOME and ANODE_ROOT environment variables must be defined -->
+	<macrodef name = "git">
+	    <attribute name = "command" />
+	    <attribute name = "dir" default = "" />
+	    <element name = "args" optional = "true" />
+	    <sequential>
+		<echo message = "git @{command}" />
+		<exec executable = "git" dir = "@{dir}">
+		    <arg value = "@{command}" />
+		    <args/>
+		</exec>
+	    </sequential>
+	</macrodef>
+	<macrodef name = "git-clone-pull">
+	    <attribute name = "repository" />
+	    <attribute name = "dest" />
+	    <sequential>
+		<git command = "clone">
+		    <args>
+		        <arg value = "@{repository}" />
+		        <arg value = "@{dest}" />
+		    </args>
+		</git>
+		<git command = "pull" dir = "@{dest}" />
+	    </sequential>
+	</macrodef>
 
+	<!-- ANDROID_HOME and ANODE_ROOT environment variables must be defined -->
+	<target name="build-devicetype">
+		<replaceregexp file="${basedir}/webinos_config.json" match='"devicetype": "(.*)"' replace='"devicetype": "${devicetype}"' />
+		<antcall target="debug"/>
+		<move file="${basedir}/webinos/platform/android/installer/bin/WebinosInstaller-debug.apk" tofile="${basedir}/webinos/platform/android/installer/WebinosInstaller-${devicetype}-debug.apk"/>
+		<!--<antcall target="release"/>
+		<move file="${basedir}/webinos/platform/android/installer/bin/WebinosInstaller-release-unsigned.apk" tofile="${basedir}/webinos/platform/android/installer/WebinosInstaller-${devicetype}-release-unsigned.apk"/>
+		-->
+	</target>
+	
+	<target name="build-tv">
+		<!-- Copy config -->
+		<copy file="${basedir}/webinos_config.TV.json" overwrite="true" tofile="${basedir}/webinos_config.json"/>
+	
+		<!-- Add file API parameters -->
+		<replaceregexp file="${basedir}/webinos_config.json" flags="m" byline="false" match='"name":\s*"file",[^"]*"params":[^{]*\{\s*\}' 
+			replace='"name": "file",${line.separator}      "params":{${line.separator}          "local" : { "server" : { "port" : 9999, "hostname" : "localhost"},"shares" :[ { "name" : "SD-CARD", "path" : "/sdcard"}]}${line.separator}      }' />
+		
+		<antcall target="build-devicetype">
+			<param name="devicetype" value="tv"/>
+		</antcall>
+		
+		<!-- Restore config -->
+		<copy file="${basedir}/webinos_config.Laptop.json" overwrite="true" tofile="${basedir}/webinos_config.json"/>
+	</target>
+	
+	<target name="build-tablet">
+		<!-- Copy config -->
+		<copy file="${basedir}/webinos_config.WALLET.json" overwrite="true" tofile="${basedir}/webinos_config.json"/>
+	
+		<!-- Add file API parameters -->
+		<replaceregexp file="${basedir}/webinos_config.json" flags="m" byline="false" match='"name":\s*"file",[^"]*"params":[^{]*\{\s*\}' 
+			replace='"name": "file",${line.separator}      "params":{${line.separator}          "local" : { "server" : { "port" : 9999, "hostname" : "localhost"},"shares" :[ { "name" : "SD-CARD", "path" : "/sdcard"}]}${line.separator}      }' />
+		
+		<antcall target="build-devicetype">
+			<param name="devicetype" value="tablet"/>
+		</antcall>
+		
+		<!-- Restore config -->
+		<copy file="${basedir}/webinos_config.Laptop.json" overwrite="true" tofile="${basedir}/webinos_config.json"/>
+	</target>
+	
+	<target name="build-all">
+
+		<antcall target="clean"/>
+		<antcall target="build-tv"/>
+		<antcall target="clean"/>
+		<antcall target="build-tablet"/>
+
+	</target>
+	
 	<target name="gen-webinos">
+
+		<!-- Get the enrolment app and prepare it for package -->
+
+		<git-clone-pull repository="git://github.com/webinos/app-pzp-enrolment.git" dest="${basedir}/webinos/platform/android/tmp-app-enrolment" />
+
+		<ant antfile="build.xml" dir="${basedir}/webinos/platform/android/tmp-app-enrolment"/>
+
+		<copy todir="${basedir}/webinos/web_root/apps/wrt/">
+			<fileset dir="${basedir}/webinos/platform/android/tmp-app-enrolment/installed"/>
+		</copy>
+
 
 		<!-- Creates app/assets/webinos.zip -->
 		<zip destfile="${basedir}/webinos/platform/android/app/assets/modules/webinos.zip">
@@ -33,7 +119,8 @@
 				node_modules/optimist/,
 				node_modules/JSV/,
 				webinos/web_root/webinos.js,
-				webinos/" 
+				webinos/,
+				webinos/web_root/apps/wrt/"
 			excludes="
 				webinos/platform/,
 				webinos/core/pzh/,
@@ -41,7 +128,6 @@
 				
                 webinos/web_root/tests/,
 				webinos/web_root/api_test_specs/,
-				webinos/web_root/apps/,
 				webinos/web_root/*.html,
 				webinos/web_root/*.xml,
 				webinos/web_root/*.json,
@@ -78,11 +164,11 @@
 
 		<!-- Builds app/bin/app-debug.apk
 		Can be installed with the command: adb install app/bin/app-debug.apk -->
-		<ant dir="${basedir}/webinos/platform/android/wrt" target="debug" />
+		<ant dir="${basedir}/webinos/platform/android/app" target="debug" />
 
 		<!-- Builds wrt/bin/wrt-debug.apk
 		Can be installed with the command: adb install wrt/bin/wrt-debug.apk -->
-		<ant dir="${basedir}/webinos/platform/android/app" target="debug" />
+		<!-- <ant dir="${basedir}/webinos/platform/android/wrt" target="debug" /> -->
 
 	</target>
 
@@ -90,11 +176,11 @@
 
 		<!-- Builds app/bin/app-release.apk
 		Can be installed with the command: adb install app/bin/app-release.apk -->
-		<ant dir="${basedir}/webinos/platform/android/wrt" target="release" />
+		<ant dir="${basedir}/webinos/platform/android/app" target="release" />
 
 		<!-- Builds wrt/bin/wrt-release.apk
 		Can be installed with the command: adb install wrt/bin/wrt-release.apk -->
-		<ant dir="${basedir}/webinos/platform/android/app" target="release" />
+		<!-- <ant dir="${basedir}/webinos/platform/android/wrt" target="release" /> -->
 
 	</target>
 
@@ -117,7 +203,7 @@
 	<target name="clean" depends="gen-webinos-clean">
 
 		<!-- cleans wrt/bin/wrt-*.apk -->
-		<ant dir="${basedir}/webinos/platform/android/wrt" target="clean" />
+		<!-- <ant dir="${basedir}/webinos/platform/android/wrt" target="clean" /> -->
 
 		<!-- cleans app/bin/app-*.apk -->
 		<ant dir="${basedir}/webinos/platform/android/app" target="clean" />

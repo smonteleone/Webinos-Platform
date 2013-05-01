@@ -191,7 +191,7 @@ var PzpWSS = function (parent) {
                     parent.pzpWebSocket.connectedApp(connection, msg.payload.value);
                     break;
                 case "setFriendlyName":
-                    //parent.changeFriendlyName(msg.payload.value);
+                    parent.changeFriendlyName(msg.payload.value);
                     // THis functionality will be added via webinos core api.
                     break;
                 case "getFriendlyName":
@@ -757,7 +757,7 @@ var PzpWSS = function (parent) {
                     connectedWebApp[address].socket.pause ();
                     connectedWebApp[address].sendUTF(jsonString);
                 } catch (err) {
-                    self.pzp_state.logger.error ("exception in sending message to pzp - " + err);
+                    logger.error ("exception in sending message to pzp - " + err);
                 } finally {
                     logger.log ('send to web app - ' + address + ' message ' + jsonString);
                     connectedWebApp[address].socket.resume ();
